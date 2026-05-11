@@ -22,3 +22,8 @@ npm run sync:vendor
 
 The desktop app binds the WebUI to `127.0.0.1`, starts it with
 `HERMES_DESKTOP=1`, and exposes only a small preload IPC API to the page.
+
+## Documents
+
+- [Product Requirements](docs/PRD.md)
+- [Project Structure](docs/PROJECT_STRUCTURE.md)
