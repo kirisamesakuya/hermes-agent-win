@@ -1,12 +1,13 @@
 import fs from "node:fs";
-import net from "node:net";
 import path from "node:path";
 import { ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 import { BrowserWindow } from "electron";
 import { LogBuffer } from "./logBuffer.js";
 import { desktopStateRoot, hermesHomePath, webuiRoot } from "./paths.js";
-import { findPython, pythonInvocation } from "./probes.js";
 import { WebuiStatus } from "./types.js";
+import { waitForHealth } from "./webui/health.js";
+import { findFreePort } from "./webui/ports.js";
+import { ensureWebuiPython } from "./webui/venv.js";
 
 export class WebuiService {
   private child: ChildProcessWithoutNullStreams | null = null;
@@ -133,78 +134,4 @@ export class WebuiService {
       win.webContents.send("hermes-webui-event", status);
     }
   }
-}
-
-async function ensureWebuiPython(
-  root: string,
-  logs: LogBuffer
-): Promise<{ command: string; argsPrefix: string[] }> {
-  const venvPython = path.join(root, ".venv", "Scripts", "python.exe");
-  const requirements = path.join(root, "requirements.txt");
-  if (!fs.existsSync(venvPython)) {
-    const probe = await findPython();
-    if (!probe.ok) throw new Error(probe.error || "Python launcher was not found.");
-    const invocation = pythonInvocation(probe);
-    logs.append(`[webui] Creating Python virtual environment at ${path.join(root, ".venv")}\n`);
-    await runChecked(invocation.command, [...invocation.argsPrefix, "-m", "venv", ".venv"], root, logs);
-  }
-
-  const marker = path.join(root, ".venv", ".hermes-desktop-requirements");
-  if (fs.existsSync(requirements) && !fs.existsSync(marker)) {
-    logs.append("[webui] Installing WebUI Python requirements\n");
-    await runChecked(venvPython, ["-m", "pip", "install", "-r", requirements], root, logs);
-    fs.writeFileSync(marker, new Date().toISOString(), "utf8");
-  }
-
-  return { command: venvPython, argsPrefix: [] };
-}
-
-function runChecked(command: string, args: string[], cwd: string, logs: LogBuffer): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd, windowsHide: true });
-    let stderr = "";
-    child.stdout.on("data", (chunk: Buffer) => logs.append(chunk.toString()));
-    child.stderr.on("data", (chunk: Buffer) => {
-      const text = chunk.toString();
-      stderr += text;
-      logs.append(text);
-    });
-    child.on("error", reject);
-    child.on("exit", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`${command} ${args.join(" ")} failed with ${code}: ${stderr.trim()}`));
-    });
-  });
-}
-
-async function findFreePort(start: number): Promise<number> {
-  for (let port = start; port < start + 50; port += 1) {
-    if (await canListen(port)) return port;
-  }
-  throw new Error("No free localhost port found for Hermes WebUI.");
-}
-
-function canListen(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = net.createServer();
-    server.once("error", () => resolve(false));
-    server.once("listening", () => {
-      server.close(() => resolve(true));
-    });
-    server.listen(port, "127.0.0.1");
-  });
-}
-
-async function waitForHealth(baseUrl: string, timeoutMs: number): Promise<void> {
-  const started = Date.now();
-  while (Date.now() - started < timeoutMs) {
-    try {
-      const response = await fetch(`${baseUrl}/health`);
-      if (response.ok) return;
-    } catch {
-      // Wait for the Python server to bind.
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-  throw new Error("Timed out waiting for Hermes WebUI /health.");
 }

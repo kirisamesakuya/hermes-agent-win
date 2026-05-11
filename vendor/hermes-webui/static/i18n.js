@@ -9469,9 +9469,12 @@ function setLocale(lang) {
 /**
  * Load locale from localStorage (called once at boot, before DOMContentLoaded).
  * Server-persisted preference is applied later in loadSettingsPanel().
+ * When nothing is saved yet, default to Simplified Chinese (Hermes Windows desktop product default).
  */
 function loadLocale() {
-  setLocale(resolvePreferredLocale(null, localStorage.getItem('hermes-lang')));
+  const stored = localStorage.getItem('hermes-lang');
+  const fallback = stored !== null && stored !== '' ? stored : 'zh';
+  setLocale(resolvePreferredLocale(null, fallback));
 }
 
 /**

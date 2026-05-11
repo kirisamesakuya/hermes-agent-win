@@ -8,7 +8,7 @@
     "dev": "npm run build && electron .",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:desktop": "npm run build && node dist/desktop/src/smoke.js",
+    "test:desktop": "npm run build && node dist/desktop/src/smoke.js && node dist/desktop/src/smokePorts.js && py -3 scripts/smoke-desktop-api.py",
     "sync:vendor": "powershell -ExecutionPolicy Bypass -File scripts/sync-vendor.ps1"
   },
   "keywords": [

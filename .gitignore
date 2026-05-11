@@ -1,6 +1,9 @@
 node_modules/
 dist/
 *.log
+__pycache__/
+**/__pycache__/
+*.py[cod]
 vendor/*.zip
 vendor/hermes-webui/.venv/
 vendor/hermes-webui/__pycache__/

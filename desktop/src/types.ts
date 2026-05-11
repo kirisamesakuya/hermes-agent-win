@@ -1,3 +1,7 @@
+import type { AppLocale } from "./i18n/appLocale.js";
+
+export type { AppLocale };
+
 export type HermesInstallStatus = {
   installed: boolean;
   commandPath: string | null;
@@ -44,13 +48,18 @@ export type InstallEvent = {
   code?: number | null;
 };
 
+export type OpenPathTarget = "logs" | "hermesHome" | "webuiRoot";
+
 export type DesktopApi = {
   getStatus(): Promise<DesktopStatus>;
   installHermes(): Promise<{ started: boolean }>;
   restartWebui(): Promise<WebuiStatus>;
   pickWorkspace(): Promise<{ canceled: boolean; path: string | null }>;
   tailLogs(lines?: number): Promise<string>;
-  openPath(target: "logs" | "hermesHome" | "webuiRoot" | string): Promise<{ ok: boolean; error?: string }>;
+  openPath(target: OpenPathTarget): Promise<{ ok: boolean; error?: string }>;
+  getLocale(): Promise<AppLocale>;
+  setLocale(locale: AppLocale): Promise<{ ok: boolean }>;
+  onLocaleChanged(handler: (locale: AppLocale) => void): () => void;
   onInstallEvent(callback: (event: InstallEvent) => void): () => void;
   onWebuiEvent(callback: (status: WebuiStatus) => void): () => void;
 };
