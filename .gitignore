@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.log
+vendor/*.zip
+vendor/hermes-webui/.venv/
+vendor/hermes-webui/__pycache__/
+vendor/hermes-webui/**/__pycache__/
+vendor/hermes-webui/.pytest_cache/
+vendor/hermes-agent/.venv/
+vendor/hermes-agent/__pycache__/
+vendor/hermes-agent/**/__pycache__/
